@@ -1,13 +1,13 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
-/// The outcome of an operation that returns no value: either a success or a failure carrying an <see cref="Veredito.Error"/>.
+/// The outcome of an operation that returns no value: either a success or a failure carrying an <see cref="NoThrow.Error"/>.
 /// </summary>
 /// <remarks>
-/// An <see cref="Veredito.Error"/> converts implicitly into a failed <see cref="Result"/>, so a method can simply
+/// An <see cref="NoThrow.Error"/> converts implicitly into a failed <see cref="Result"/>, so a method can simply
 /// <c>return UserErrors.NotFound;</c>.
 /// </remarks>
 public class Result
@@ -171,7 +171,7 @@ public class Result
     public Result<TOut> Bind<TOut>(Func<Result<TOut>> next) =>
         IsSuccess ? next() : Failure<TOut>(Error);
 
-    /// <summary>Converts an <see cref="Veredito.Error"/> into a failed result.</summary>
+    /// <summary>Converts an <see cref="NoThrow.Error"/> into a failed result.</summary>
     public static implicit operator Result(Error error) => Failure(error);
 
     /// <summary>Describes the outcome, e.g. <c>Success</c> or <c>Failure(User.NotFound)</c>.</summary>
@@ -180,10 +180,10 @@ public class Result
 
 /// <summary>
 /// The outcome of an operation that returns a <typeparamref name="TValue"/> on success,
-/// or a failure carrying an <see cref="Veredito.Error"/>.
+/// or a failure carrying an <see cref="NoThrow.Error"/>.
 /// </summary>
 /// <remarks>
-/// Both a <typeparamref name="TValue"/> and an <see cref="Veredito.Error"/> convert implicitly into a
+/// Both a <typeparamref name="TValue"/> and an <see cref="NoThrow.Error"/> convert implicitly into a
 /// <see cref="Result{TValue}"/>, so a method can <c>return user;</c> or <c>return UserErrors.NotFound;</c>.
 /// C# forbids user-defined conversions from an interface type, so when <typeparamref name="TValue"/> is an
 /// interface (e.g. <c>IReadOnlyList&lt;T&gt;</c>) use <see cref="Result.Success{TValue}(TValue)"/> instead.
@@ -272,6 +272,6 @@ public sealed class Result<TValue> : Result
     /// </remarks>
     public static implicit operator Result<TValue>(TValue value) => Create(value);
 
-    /// <summary>Converts an <see cref="Veredito.Error"/> into a failed result.</summary>
+    /// <summary>Converts an <see cref="NoThrow.Error"/> into a failed result.</summary>
     public static implicit operator Result<TValue>(Error error) => Failure<TValue>(error);
 }

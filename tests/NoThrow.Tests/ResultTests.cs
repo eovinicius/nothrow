@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace Veredito.Tests;
+namespace NoThrow.Tests;
 
 public class ResultTests
 {

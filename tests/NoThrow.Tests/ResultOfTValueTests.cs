@@ -1,4 +1,4 @@
-namespace Veredito.Tests;
+namespace NoThrow.Tests;
 
 public class ResultOfTValueTests
 {
@@ -58,10 +58,10 @@ public class ResultOfTValueTests
     [Fact]
     public void Value_ConvertsImplicitlyIntoSuccessfulResult()
     {
-        Result<string> result = "veredito";
+        Result<string> result = "nothrow";
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("veredito", result.Value);
+        Assert.Equal("nothrow", result.Value);
     }
 
     [Fact]

@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/NoThrow/NoThrow.csproj" />
+  </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/NoThrow.Benchmarks/NoThrow.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/NoThrow.Tests/NoThrow.Tests.csproj" />
+  </Folder>
+</Solution>

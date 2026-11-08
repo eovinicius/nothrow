@@ -1,4 +1,4 @@
-namespace Veredito.Tests;
+namespace NoThrow.Tests;
 
 public class ResultExtensionsTests
 {

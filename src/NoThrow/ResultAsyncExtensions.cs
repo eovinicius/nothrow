@@ -1,4 +1,4 @@
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
 /// Asynchronous counterparts of <see cref="Result"/>'s composition API, for chains that await I/O.

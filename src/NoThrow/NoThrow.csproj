@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <PackageId>Veredito</PackageId>
+    <PackageId>NoThrow</PackageId>
     <Description>A lightweight, dependency-free Result pattern for .NET: Result, Result&lt;T&gt;, typed errors and validation errors.</Description>
   </PropertyGroup>
 

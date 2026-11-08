@@ -1,11 +1,11 @@
-# Veredito
+# NoThrow
 
 A lightweight, dependency-free **Result pattern** for .NET.
 
-Every operation ends with a verdict: it either succeeded (optionally with a value) or failed with a typed `Error`.
+Errors are values, not exceptions: every operation returns a result that either succeeded (optionally with a value) or failed with a typed `Error`, so failure shows up in the signature instead of in a `throw`.
 
 ```sh
-dotnet add package Veredito
+dotnet add package NoThrow
 ```
 
 Targets the supported LTS releases: `net8.0` and `net10.0`.

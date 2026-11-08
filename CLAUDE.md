@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Veredito is a lightweight, **dependency-free** Result pattern library for .NET, published as the NuGet package `Veredito`. Keep the core package free of external dependencies.
+NoThrow is a lightweight, **dependency-free** Result pattern library for .NET, published as the NuGet package `NoThrow`. Keep the core package free of external dependencies.
 
 ## Commands
 
@@ -15,12 +15,12 @@ dotnet build                                   # builds src and tests (net8.0 + 
 dotnet test                                    # runs all xUnit tests on net8.0 and net10.0 (needs both runtimes)
 dotnet test -f net10.0                         # without the .NET 8 runtime installed
 dotnet test --filter "FullyQualifiedName~ResultTests"                          # one test class
-dotnet test --filter "FullyQualifiedName=Veredito.Tests.ResultTests.Bind_RunsNextOnlyOnSuccess"  # one test
-dotnet pack src/Veredito -c Release            # produces .nupkg + .snupkg
-dotnet run -c Release --project benchmarks/Veredito.Benchmarks -- --filter "*"  # BenchmarkDotNet (add --job short for a quick run)
+dotnet test --filter "FullyQualifiedName=NoThrow.Tests.ResultTests.Bind_RunsNextOnlyOnSuccess"  # one test
+dotnet pack src/NoThrow -c Release            # produces .nupkg + .snupkg
+dotnet run -c Release --project benchmarks/NoThrow.Benchmarks -- --filter "*"  # BenchmarkDotNet (add --job short for a quick run)
 ```
 
-`benchmarks/Veredito.Benchmarks` is the only project allowed to take a third-party dependency (BenchmarkDotNet); it is not packed and not run by `dotnet test`.
+`benchmarks/NoThrow.Benchmarks` is the only project allowed to take a third-party dependency (BenchmarkDotNet); it is not packed and not run by `dotnet test`.
 
 There is no separate linter: `TreatWarningsAsErrors` is on for every project, and `GenerateDocumentationFile` is on for `src/`, so **every public member needs an XML doc comment** or the build fails (CS1591).
 
@@ -34,7 +34,7 @@ CI (`.github/workflows/ci.yml`, GitHub Actions) runs restore → build (Release)
 
 ## Release checklist
 
-Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed: it tests, packs with the tag as the version (`v0.1.0` → `0.1.0`) and pushes to nuget.org through Trusted Publishing (OIDC via `NuGet/login`, user `eovinicius`; no API key is stored). The nuget.org policy must match owner `eovinicius`, repository `veredito`, workflow `release.yml` — renaming the file breaks publishing. A published version can only be unlisted, never deleted.
+Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed: it tests, packs with the tag as the version (`v0.1.0` → `0.1.0`) and pushes to nuget.org through Trusted Publishing (OIDC via `NuGet/login`, user `eovinicius`; no API key is stored). The nuget.org policy must match owner `eovinicius`, repository `nothrow`, workflow `release.yml` — renaming the file breaks publishing. A published version can only be unlisted, never deleted.
 
 1. Check that CI is green on the commit being released.
 2. Bump `VersionPrefix` to the version being released, so local builds match.
@@ -43,7 +43,7 @@ Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed:
 
 ## Architecture
 
-All types live in the `Veredito` namespace in `src/Veredito/`:
+All types live in the `NoThrow` namespace in `src/NoThrow/`:
 
 - `Error` — a non-sealed `record (Code, Message, ErrorType)` with factory methods per `ErrorType`. `Error.None` marks success; `Error.NullValue` (an `ErrorType.Failure`) is produced when `null` is converted into a `Result<T>`. It's non-sealed only so `ValidationError` can derive from it. `Code`/`Message` are declared explicitly over `readonly` fields so both the constructor and `with` reject `null` (no `field` keyword: `net8.0` compiles with C# 12); empty strings stay legal because `Error.None` uses them. `Is(other)` compares `Code` (ordinal) and `Type` only; `==` still compares every member. `PrintMembers` prints `Code` and `Type`, never `Message`.
 - `ValidationError` — sealed record deriving from `Error` with fixed code `Validation.Failed`; aggregates per-field errors where each inner `Error.Code` is the field name. Requires at least one error, rejects `null` and `Error.None` items, flattens nested `ValidationError`s (one level suffices, since each is flat by construction), and keeps the copy in a private array. Overrides `Equals`/`GetHashCode` (allocation-free) so equality covers the list contents, and `PrintMembers` so `ToString` lists only field names.

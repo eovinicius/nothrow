@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
 /// Combinators that return the same kind of result they receive, so a <see cref="Result{TValue}"/>

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
 /// Aggregates several per-field failures into a single <see cref="Error"/>, so that

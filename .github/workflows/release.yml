@@ -2,7 +2,7 @@ name: Release
 
 # Publishes to nuget.org when a version tag is pushed: git tag v0.1.0 && git push origin v0.1.0
 # Uses nuget.org Trusted Publishing (OIDC): no API key is stored. The policy on nuget.org must match
-# owner "eovinicius", repository "veredito" and workflow file "release.yml".
+# owner "eovinicius", repository "nothrow" and workflow file "release.yml".
 on:
   push:
     tags: ['v*']
@@ -30,7 +30,7 @@ jobs:
       - run: dotnet test -c Release
 
       # The tag is the version: v0.1.0 -> 0.1.0, v0.2.0-preview.1 -> 0.2.0-preview.1
-      - run: dotnet pack src/Veredito -c Release -o artifacts -p:Version=${GITHUB_REF_NAME#v}
+      - run: dotnet pack src/NoThrow -c Release -o artifacts -p:Version=${GITHUB_REF_NAME#v}
 
       - uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         id: login

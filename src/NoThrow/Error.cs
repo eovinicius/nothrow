@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
 /// Describes why an operation failed.

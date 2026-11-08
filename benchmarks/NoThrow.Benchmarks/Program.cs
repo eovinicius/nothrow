@@ -1,6 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using Veredito;
+using NoThrow;
 
 BenchmarkSwitcher.FromAssembly(typeof(CreationBenchmarks).Assembly).Run(args);
 

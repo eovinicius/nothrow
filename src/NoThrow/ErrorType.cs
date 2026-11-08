@@ -1,4 +1,4 @@
-namespace Veredito;
+namespace NoThrow;
 
 /// <summary>
 /// The category of an <see cref="Error"/>. Integrations translate it into their own vocabulary,
