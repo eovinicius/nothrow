@@ -22,8 +22,9 @@
     <!-- SourceLink ships with the SDK; these put the repository URL and commit in the .nuspec and embed generated sources. -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- Built into the SDK (no dependency). Set PackageValidationBaselineVersion after the first release to catch API breaks. -->
+    <!-- Built into the SDK (no dependency). The baseline is the latest published version: pack fails on undeclared API breaks against it. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
     <!-- No reflection: safe for trimming and Native AOT. Also enables the analyzers that keep it that way. -->
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
