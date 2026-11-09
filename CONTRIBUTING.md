@@ -47,7 +47,9 @@ dotnet run -c Release --project benchmarks/NoThrow.Benchmarks -- --filter "*" --
 - **Tests.** Every behavior change comes with tests. Use xUnit with plain `Assert.*` (no assertion libraries), one test
   class per public type, and name tests `Member_ExpectedBehavior` (e.g. `Failure_WithErrorNone_Throws`).
 - **Docs.** `README.md` is also the NuGet package readme. When public behavior changes, update it, including the
-  *Pitfalls* and *Testing* sections. Its snippets must compile on `net8.0` with nullable enabled.
+  *Pitfalls* and *Testing* sections. Its ` ```csharp ` snippets are compiled by `ReadmeTests` (C# 12, nullable enabled),
+  so `dotnet test` fails, pointing at the README line, when a snippet no longer compiles. Names a snippet assumes but
+  does not declare (`_users`, `command`, `User`...) are stubbed in `ReadmeTests`.
 - **Breaking changes.** `dotnet pack` compares the public API against the latest published version and fails on an
   undeclared break. Breaking changes need prior discussion in an issue.
 

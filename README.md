@@ -24,6 +24,7 @@ public static class UserErrors
 {
     public static readonly Error NotFound = Error.NotFound("User.NotFound", "User not found.");
     public static readonly Error EmailTaken = Error.Conflict("User.EmailTaken", "Email is already in use.");
+    public static readonly Error Inactive = Error.Conflict("User.Inactive", "User is inactive.");
 }
 ```
 
