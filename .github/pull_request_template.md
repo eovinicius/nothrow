@@ -8,5 +8,6 @@
 - [ ] Tests cover the change, and `dotnet build` and `dotnet test` pass locally.
 - [ ] Every new public member has an XML doc comment.
 - [ ] `README.md` is updated if public behavior changed (including *Pitfalls* and *Testing*).
+- [ ] `CHANGELOG.md` has an entry under `[Unreleased]` if users of the package can notice the change.
 - [ ] The `NoThrow` package still has no dependencies.
 - [ ] Public API or breaking changes were agreed on in an issue first.

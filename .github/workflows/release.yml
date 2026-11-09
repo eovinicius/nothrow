@@ -3,22 +3,29 @@ name: Release
 # Publishes to nuget.org when a version tag is pushed: git tag v0.1.0 && git push origin v0.1.0
 # Uses nuget.org Trusted Publishing (OIDC): no API key is stored. The policy on nuget.org must match
 # owner "eovinicius", repository "nothrow" and workflow file "release.yml".
+# Then creates the GitHub Release, with the version's CHANGELOG.md section as its notes.
 on:
   push:
     tags: ['v*']
 
-permissions:
-  contents: read
-  id-token: write # required for the OIDC token exchange with nuget.org
+# Each job asks for what it needs.
+permissions: {}
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for the OIDC token exchange with nuget.org
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # full history for SourceLink's commit metadata
           persist-credentials: false
+
+      # A published version can never be deleted, so fail before publishing anything if its release notes are missing.
+      - name: Check the CHANGELOG entry
+        run: bash .github/scripts/changelog-section.sh "${GITHUB_REF_NAME#v}" > /dev/null
 
       # 8.0.x provides the runtime for the net8.0 test run; 10.0.x is the SDK pinned by global.json.
       - uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
@@ -39,3 +46,24 @@ jobs:
 
       # Pushing the .nupkg also pushes the .snupkg next to it.
       - run: dotnet nuget push "artifacts/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # creates the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A version with a pre-release suffix (v0.2.0-preview.1) is marked as a pre-release.
+      - name: Create the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          bash .github/scripts/changelog-section.sh "$version" > release-notes.md
+          prerelease=()
+          if [[ "$version" == *-* ]]; then prerelease=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$GITHUB_REF_NAME" --notes-file release-notes.md "${prerelease[@]}"

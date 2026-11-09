@@ -12,6 +12,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/eovinicius/nothrow</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>https://github.com/eovinicius/nothrow/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <PackageTags>result;result-pattern;error-handling;railway;functional</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IncludeSymbols>true</IncludeSymbols>

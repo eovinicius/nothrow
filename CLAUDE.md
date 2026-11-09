@@ -44,11 +44,13 @@ The repository is public and open to outside contributions. Settings that live o
 
 ## Release checklist
 
-Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed: it tests, packs with the tag as the version (`v0.1.0` → `0.1.0`) and pushes to nuget.org through Trusted Publishing (OIDC via `NuGet/login`, user `eovinicius`; no API key is stored). The nuget.org policy must match owner `eovinicius`, repository `nothrow`, workflow `release.yml` — renaming the file breaks publishing. A published version can only be unlisted, never deleted.
+Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed. Job `publish` (`contents: read`, `id-token: write`) first checks that `CHANGELOG.md` has a section for the version — **before** anything is pushed, since a published version can only be unlisted, never deleted — then tests, packs with the tag as the version (`v0.1.0` → `0.1.0`) and pushes to nuget.org through Trusted Publishing (OIDC via `NuGet/login`, user `eovinicius`; no API key is stored). The nuget.org policy must match owner `eovinicius`, repository `nothrow`, workflow `release.yml` — renaming the file breaks publishing. Job `github-release` (`contents: write`, only after `publish` succeeds) creates the GitHub Release with that CHANGELOG section as its notes (`--prerelease` when the version has a `-` suffix). Both use `.github/scripts/changelog-section.sh <version>`, which prints a version's section and exits 1 when it is missing or empty.
+
+`CHANGELOG.md` follows Keep a Changelog: user-visible changes go under `## [Unreleased]` in the PR that makes them (`Added`/`Changed`/`Fixed`/`Removed`, plus `Breaking`); headings carry no link references, so the script can extract them. The package's `PackageReleaseNotes` links to the CHANGELOG.
 
 1. Check that CI is green on the commit being released.
-2. Bump `VersionPrefix` to the version being released, so local builds match (through a PR, like every change to `main`); tag the merged commit on `main`.
-3. `git tag vX.Y.Z && git push origin vX.Y.Z`, then follow the Release run.
+2. In one PR: bump `VersionPrefix` to the version being released, and rename `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` with a fresh empty `## [Unreleased]` above it. Tag the merged commit on `main`.
+3. `git tag vX.Y.Z && git push origin vX.Y.Z`, then follow the Release run (NuGet, then the GitHub Release).
 4. After the first version is published, set `PackageValidationBaselineVersion` to it so `dotnet pack` fails on undeclared API breaks; keep it at the latest published version afterwards.
 
 ## Architecture
