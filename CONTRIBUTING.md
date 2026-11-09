@@ -52,7 +52,10 @@ dotnet run -c Release --project benchmarks/NoThrow.Benchmarks -- --filter "*" --
 
 1. Fork the repository and create a branch from `main`.
 2. Make your change, with tests, and run `dotnet build` and `dotnet test` locally.
-3. Open a pull request and fill in the template. Link the issue it resolves (`Closes #123`).
+3. If the change is visible to users of the package, add an entry under `## [Unreleased]` in
+   [CHANGELOG.md](CHANGELOG.md) (`Added`, `Changed`, `Fixed`, `Removed`, and `Breaking` for breaking changes).
+   Internal changes (tests, CI, refactoring) need no entry.
+4. Open a pull request and fill in the template. Link the issue it resolves (`Closes #123`).
 
 Every pull request needs:
 
