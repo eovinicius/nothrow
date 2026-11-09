@@ -47,6 +47,48 @@ public class ErrorTests
         Assert.Throws<ArgumentNullException>(() => error with { Message = null! });
     }
 
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(42)]
+    [InlineData(999)]
+    public void Constructor_WithUndefinedType_Throws(int type)
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new Error("Some.Code", "Some message.", (ErrorType)type));
+
+        Assert.Equal("Type", exception.ParamName);
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(1001)]
+    [InlineData(int.MaxValue)]
+    public void Constructor_WithApplicationDefinedType_IsAllowed(int type)
+    {
+        var error = new Error("Some.Code", "Some message.", (ErrorType)type);
+
+        Assert.Equal((ErrorType)type, error.Type);
+    }
+
+    // Guards the range check in Error: a member added to ErrorType must be accepted too.
+    [Fact]
+    public void Constructor_AcceptsEveryDefinedType()
+    {
+        foreach (var type in Enum.GetValues<ErrorType>())
+        {
+            Assert.Equal(type, new Error("Some.Code", "Some message.", type).Type);
+        }
+    }
+
+    [Fact]
+    public void With_UndefinedType_Throws()
+    {
+        var error = Error.Failure("Some.Code", "Some message.");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => error with { Type = (ErrorType)42 });
+        Assert.Equal((ErrorType)1000, (error with { Type = (ErrorType)1000 }).Type);
+    }
+
     [Fact]
     public void Constructor_WithEmptyStrings_IsAllowed()
     {
@@ -210,6 +252,41 @@ public class ErrorTests
     {
         Assert.Throws<ArgumentException>(() => new ValidationError([null!]));
         Assert.Throws<ArgumentException>(() => new ValidationError([Error.None]));
+    }
+
+    [Fact]
+    public void ValidationError_With_DifferentCodeOrType_Throws()
+    {
+        var error = new ValidationError([Error.Validation("Email", "Email is required.")]);
+
+        Assert.Equal("Code", Assert.Throws<ArgumentException>(() => error with { Code = "Other.Code" }).ParamName);
+        Assert.Equal("Type", Assert.Throws<ArgumentException>(() => error with { Type = ErrorType.NotFound }).ParamName);
+        Assert.Throws<ArgumentException>(() => new ValidationError([Error.Validation("Email", "Required.")]) { Code = "Other.Code" });
+    }
+
+    [Fact]
+    public void ValidationError_With_SameCodeAndTypeOrNewMessage_IsAllowed()
+    {
+        var error = new ValidationError([Error.Validation("Email", "Email is required.")]);
+
+        var copy = error with { Code = ValidationError.DefaultCode, Type = ErrorType.Validation };
+        var renamed = error with { Message = "The order is invalid." };
+
+        Assert.Equal(error, copy);
+        Assert.Equal("The order is invalid.", renamed.Message);
+        Assert.Equal(ValidationError.DefaultCode, renamed.Code);
+        Assert.Equal(error.Errors, renamed.Errors);
+    }
+
+    [Fact]
+    public void With_OnAPlainError_CanChangeCodeAndType()
+    {
+        var error = Error.Validation("Email", "Email is required.");
+
+        var changed = error with { Code = "User.Email", Type = ErrorType.Conflict };
+
+        Assert.Equal("User.Email", changed.Code);
+        Assert.Equal(ErrorType.Conflict, changed.Type);
     }
 
     [Fact]

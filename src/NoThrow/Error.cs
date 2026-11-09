@@ -7,17 +7,26 @@ namespace NoThrow;
 /// </summary>
 /// <param name="Code">A stable, machine-readable identifier (e.g. <c>"User.NotFound"</c>) that callers can branch on.</param>
 /// <param name="Message">A human-readable description of the failure.</param>
-/// <param name="Type">The category of the failure.</param>
+/// <param name="Type">
+/// The category of the failure: a member of <see cref="ErrorType"/>, or an application-defined value from 1000 upwards.
+/// </param>
 /// <remarks>
 /// Not sealed so that <see cref="ValidationError"/> can extend it.
 /// <see cref="ToString"/> prints <see cref="Code"/> and <see cref="Type"/> but never <see cref="Message"/>,
 /// so logging an error cannot leak data embedded in its message.
 /// </remarks>
 /// <exception cref="ArgumentNullException"><paramref name="Code"/> or <paramref name="Message"/> is <see langword="null"/>.</exception>
+/// <exception cref="ArgumentOutOfRangeException">
+/// <paramref name="Type"/> is neither a member of <see cref="ErrorType"/> nor an application-defined value (1000 and above).
+/// </exception>
 public record Error(string Code, string Message, ErrorType Type)
 {
+    // ErrorType values from here upwards are reserved for application-defined categories.
+    private const int ApplicationTypeMinimum = 1000;
+
     private readonly string _code = Code ?? throw new ArgumentNullException(nameof(Code));
     private readonly string _message = Message ?? throw new ArgumentNullException(nameof(Message));
+    private readonly ErrorType _type = ValidateType(Type);
 
     /// <summary>The absence of an error. Carried by every successful <see cref="Result"/>.</summary>
     public static readonly Error None = new(string.Empty, string.Empty, ErrorType.Failure);
@@ -30,10 +39,21 @@ public record Error(string Code, string Message, ErrorType Type)
 
     /// <summary>A stable, machine-readable identifier (e.g. <c>"User.NotFound"</c>) that callers can branch on.</summary>
     /// <exception cref="ArgumentNullException">The value is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">The error is a <see cref="ValidationError"/>, whose code cannot change.</exception>
     public string Code
     {
         get => _code;
-        init => _code = value ?? throw new ArgumentNullException(nameof(Code));
+        init
+        {
+            ArgumentNullException.ThrowIfNull(value, nameof(Code));
+
+            if (HasFixedCodeAndType && !string.Equals(value, _code, StringComparison.Ordinal))
+            {
+                throw new ArgumentException($"The code of a {nameof(ValidationError)} is always '{_code}'.", nameof(Code));
+            }
+
+            _code = value;
+        }
     }
 
     /// <summary>A human-readable description of the failure. Keep user input out of it.</summary>
@@ -43,6 +63,31 @@ public record Error(string Code, string Message, ErrorType Type)
         get => _message;
         init => _message = value ?? throw new ArgumentNullException(nameof(Message));
     }
+
+    /// <summary>The category of the failure.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// The value is neither a member of <see cref="ErrorType"/> nor an application-defined value (1000 and above).
+    /// </exception>
+    /// <exception cref="ArgumentException">The error is a <see cref="ValidationError"/>, whose type cannot change.</exception>
+    public ErrorType Type
+    {
+        get => _type;
+        init
+        {
+            ValidateType(value);
+
+            if (HasFixedCodeAndType && value != _type)
+            {
+                throw new ArgumentException($"The type of a {nameof(ValidationError)} is always {_type}.", nameof(Type));
+            }
+
+            _type = value;
+        }
+    }
+
+    // ValidationError fixes its code and type; `with` and object initializers must not change them.
+    // Only the init accessors read it, so it is never called before construction completes.
+    private protected virtual bool HasFixedCodeAndType => false;
 
     /// <summary>Creates an error of type <see cref="ErrorType.Failure"/>.</summary>
     public static Error Failure(string code, string message) => new(code, message, ErrorType.Failure);
@@ -87,4 +132,14 @@ public record Error(string Code, string Message, ErrorType Type)
 
         return true;
     }
+
+    // A range check rather than Enum.IsDefined: no cost on every error created. A test checks that it accepts every
+    // member, so a member added after Conflict fails it until the upper bound here is updated.
+    private static ErrorType ValidateType(ErrorType type) =>
+        type is >= ErrorType.Failure and <= ErrorType.Conflict || (int)type >= ApplicationTypeMinimum
+            ? type
+            : throw new ArgumentOutOfRangeException(
+                nameof(Type),
+                type,
+                $"Not an {nameof(ErrorType)} member, nor an application-defined value ({ApplicationTypeMinimum} and above).");
 }
