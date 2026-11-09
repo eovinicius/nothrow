@@ -26,6 +26,9 @@
     <!-- Built into the SDK (no dependency). The baseline is the latest published version: pack fails on undeclared API breaks against it. -->
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageValidationBaselineVersion>0.1.0</PackageValidationBaselineVersion>
+    <!-- The SDK's recommended code-quality rules (no package needed). Tests and benchmarks keep the default set:
+         their Member_ExpectedBehavior names would trip CA1707. Deliberate exceptions use [SuppressMessage] in place. -->
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
     <!-- No reflection: safe for trimming and Native AOT. Also enables the analyzers that keep it that way. -->
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>

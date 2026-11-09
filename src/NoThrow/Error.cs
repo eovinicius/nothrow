@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -30,6 +31,10 @@ namespace NoThrow;
 /// </exception>
 [JsonPolymorphic(UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor)]
 [JsonDerivedType(typeof(ValidationError))]
+[SuppressMessage(
+    "Naming",
+    "CA1716:Identifiers should not match keywords",
+    Justification = "Error is the library's central type; it only clashes with a Visual Basic keyword, which VB escapes as [Error].")]
 public record Error(string Code, string Message, ErrorType Type)
 {
     // ErrorType values from here upwards are reserved for application-defined categories.
@@ -146,6 +151,10 @@ public record Error(string Code, string Message, ErrorType Type)
 
     // A range check rather than Enum.IsDefined: no cost on every error created. A test checks that it accepts every
     // member, so a member added after Conflict fails it until the upper bound here is updated.
+    [SuppressMessage(
+        "Usage",
+        "CA2208:Instantiate argument exceptions correctly",
+        Justification = "The callers are the constructor and the init accessor; to them the argument is named Type.")]
     private static ErrorType ValidateType(ErrorType type) =>
         type is >= ErrorType.Failure and <= ErrorType.Conflict || (int)type >= ApplicationTypeMinimum
             ? type

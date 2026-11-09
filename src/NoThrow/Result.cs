@@ -213,6 +213,10 @@ public sealed class Result<TValue> : Result
     /// <summary>Creates a failed result, so that <c>Result&lt;User&gt;.Failure(error)</c> yields a <see cref="Result{TValue}"/>.</summary>
     /// <exception cref="ArgumentNullException"><paramref name="error"/> is <see langword="null"/>.</exception>
     /// <exception cref="InvalidOperationException"><paramref name="error"/> is <see cref="Error.None"/>.</exception>
+    [SuppressMessage(
+        "Design",
+        "CA1000:Do not declare static members on generic types",
+        Justification = "Deliberate: it hides the inherited Result.Failure so that Result<User>.Failure(error) returns a Result<User>.")]
     public static new Result<TValue> Failure(Error error) => Failure<TValue>(error);
 
     /// <summary>The value of a successful result.</summary>

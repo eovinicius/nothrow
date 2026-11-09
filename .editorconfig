@@ -1,0 +1,79 @@
+# Code style for NoThrow. Rules at `warning` fail the build (TreatWarningsAsErrors + EnforceCodeStyleInBuild),
+# so they describe conventions the code already follows; everything else is a suggestion for the IDE.
+# Line endings are normalized by .gitattributes.
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,json,xml,props,targets,csproj,slnx}]
+indent_size = 2
+
+[*.cs]
+# Layout
+csharp_style_namespace_declarations = file_scoped:warning
+csharp_using_directive_placement = outside_namespace:warning
+dotnet_sort_system_directives_first = true
+csharp_prefer_braces = true:suggestion
+csharp_new_line_before_open_brace = all
+dotnet_diagnostic.IDE0055.severity = warning
+
+# Language usage
+dotnet_style_qualification_for_field = false:suggestion
+dotnet_style_qualification_for_property = false:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_qualification_for_event = false:suggestion
+dotnet_style_predefined_type_for_locals_parameters_members = true:suggestion
+dotnet_style_predefined_type_for_member_access = true:suggestion
+dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
+dotnet_style_readonly_field = true:warning
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+
+# Naming: constants and static readonly fields are PascalCase, other private fields are _camelCase.
+dotnet_naming_rule.constants_are_pascal_case.symbols = constants
+dotnet_naming_rule.constants_are_pascal_case.style = pascal_case
+dotnet_naming_rule.constants_are_pascal_case.severity = warning
+dotnet_naming_symbols.constants.applicable_kinds = field
+dotnet_naming_symbols.constants.required_modifiers = const
+
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.symbols = static_readonly_fields
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.style = pascal_case
+dotnet_naming_rule.static_readonly_fields_are_pascal_case.severity = warning
+dotnet_naming_symbols.static_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.static_readonly_fields.required_modifiers = static, readonly
+
+dotnet_naming_rule.private_fields_are_underscore_camel_case.symbols = private_fields
+dotnet_naming_rule.private_fields_are_underscore_camel_case.style = underscore_camel_case
+dotnet_naming_rule.private_fields_are_underscore_camel_case.severity = warning
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+
+dotnet_naming_style.pascal_case.capitalization = pascal_case
+dotnet_naming_style.underscore_camel_case.required_prefix = _
+dotnet_naming_style.underscore_camel_case.capitalization = camel_case
+
+# The build honors only `dotnet_diagnostic` severities for some rules, so the enforced ones are listed by id as well.
+dotnet_diagnostic.IDE0040.severity = warning # accessibility modifiers
+dotnet_diagnostic.IDE0044.severity = warning # readonly fields
+dotnet_diagnostic.IDE0065.severity = warning # using placement
+dotnet_diagnostic.IDE0161.severity = warning # file-scoped namespace
+dotnet_diagnostic.IDE1006.severity = warning # naming rules above
+
+[src/**.cs]
+# The library always uses braces. Tests and benchmarks may not: some deliberately mirror the README's
+# brace-less early returns (`if (result.TryGetError(out var error)) return error;`).
+csharp_prefer_braces = true:warning
+dotnet_diagnostic.IDE0011.severity = warning
+# The package compiles its XML docs, which is what lets the build detect unused usings.
+dotnet_diagnostic.IDE0005.severity = warning
