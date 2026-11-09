@@ -40,6 +40,9 @@ dotnet run -c Release --project benchmarks/NoThrow.Benchmarks -- --filter "*" --
   third-party package.
 - **Warnings are errors.** Every project builds with `TreatWarningsAsErrors`, and every public member under `src/`
   needs an XML doc comment (CS1591 fails the build).
+- **Style is checked by the build.** `.editorconfig` defines the code style (file-scoped namespaces, `_camelCase`
+  private fields, formatting, braces in `src/`, no unused usings in `src/`), and the build enforces it; the library
+  also runs the SDK's recommended code-quality analyzers. `dotnet format` fixes most style issues.
 - **Trim/AOT safe.** No reflection: the trim and AOT analyzers are enabled.
 - **Tests.** Every behavior change comes with tests. Use xUnit with plain `Assert.*` (no assertion libraries), one test
   class per public type, and name tests `Member_ExpectedBehavior` (e.g. `Failure_WithErrorNone_Throws`).
