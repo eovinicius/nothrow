@@ -1,0 +1,44 @@
+name: Bug report
+description: Something in NoThrow doesn't behave as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. For questions, use [Discussions](https://github.com/eovinicius/nothrow/discussions) instead.
+        **Security vulnerabilities must not be reported here**: see [SECURITY.md](https://github.com/eovinicius/nothrow/blob/main/SECURITY.md).
+  - type: input
+    id: version
+    attributes:
+      label: NoThrow version
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: .NET version and OS
+      placeholder: .NET 10.0.0 on Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: The smallest code snippet that shows the problem.
+      render: csharp
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Exception or compiler output
+      description: Full exception message and stack trace, or the compiler diagnostic, if any.
+      render: text

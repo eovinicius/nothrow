@@ -32,12 +32,22 @@ CI (`.github/workflows/ci.yml`, GitHub Actions) runs restore → build (Release)
 - `src/Directory.Build.props` — imports the root one and adds packaging metadata shared by **every package under `src/`**: target frameworks (`net8.0;net10.0`, supported LTS only), `VersionPrefix`, license, tags, symbols, `IsAotCompatible` (no reflection — the trim/AOT analyzers enforce it), and packs the root `README.md` as the package readme. It also enables SourceLink metadata (`PublishRepositoryUrl`, `EmbedUntrackedSources`; SourceLink ships with the SDK), `ContinuousIntegrationBuild` when `CI=true` (normalized PDB paths), and `EnablePackageValidation`. API-break detection uses the SDK's package validation, **not** `PublicApiAnalyzers`, which would be a third-party dependency under `src/`. Individual `.csproj` files only set `PackageId` and `Description`. New packages (e.g. integrations) go under `src/` and inherit this.
 - Tests target `net8.0;net10.0`, the same TFMs as the package, and compile with each TFM's default C# version (C# 12 on `net8.0`).
 
+## GitHub repository settings
+
+The repository is public and open to outside contributions. Settings that live on GitHub, not in the repo:
+
+- **Rulesets on `main`**: `main: CI and history` (no bypass) blocks deletion and force-pushes, requires linear history and the `build` status check from `ci.yml` with the branch up to date. **Renaming the `build` job in `ci.yml` blocks every merge** until the ruleset's required check is renamed too. `main: review` requires a pull request with 1 approval, code-owner review (`.github/CODEOWNERS`), stale-review dismissal, approval of the last push and resolved conversations, squash merge only; the repository admin can bypass it **only through a pull request** (to merge their own PRs without approval), never by pushing directly. So every change, the maintainer's included, goes branch → PR → green CI → squash merge.
+- **Ruleset `release tags`** (`refs/tags/v*`): only the repository admin can create, move or delete version tags, since pushing one publishes to nuget.org.
+- Merging: squash only, PR title/body become the commit (so PR titles follow Conventional Commits), auto-merge and "update branch" enabled, head branches deleted on merge.
+- Security: private vulnerability reporting (the channel `SECURITY.md` points to), Dependabot alerts and security updates, secret scanning with push protection, CodeQL default setup (C# and Actions). Outside contributors' workflow runs need approval.
+- Community files: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md`, `SUPPORT.md`, issue forms and PR template under `.github/`. Questions go to Discussions; blank issues are disabled. Keep these in sync with the conventions below when they change.
+
 ## Release checklist
 
 Publishing is done by `.github/workflows/release.yml` when a `v*` tag is pushed: it tests, packs with the tag as the version (`v0.1.0` → `0.1.0`) and pushes to nuget.org through Trusted Publishing (OIDC via `NuGet/login`, user `eovinicius`; no API key is stored). The nuget.org policy must match owner `eovinicius`, repository `nothrow`, workflow `release.yml` — renaming the file breaks publishing. A published version can only be unlisted, never deleted.
 
 1. Check that CI is green on the commit being released.
-2. Bump `VersionPrefix` to the version being released, so local builds match.
+2. Bump `VersionPrefix` to the version being released, so local builds match (through a PR, like every change to `main`); tag the merged commit on `main`.
 3. `git tag vX.Y.Z && git push origin vX.Y.Z`, then follow the Release run.
 4. After the first version is published, set `PackageValidationBaselineVersion` to it so `dotnet pack` fails on undeclared API breaks; keep it at the latest published version afterwards.
 

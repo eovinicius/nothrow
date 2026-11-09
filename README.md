@@ -1,5 +1,9 @@
 # NoThrow
 
+[![NuGet](https://img.shields.io/nuget/v/NoThrow)](https://www.nuget.org/packages/NoThrow)
+[![CI](https://img.shields.io/github/actions/workflow/status/eovinicius/nothrow/ci.yml?branch=main&label=CI)](https://github.com/eovinicius/nothrow/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/eovinicius/nothrow/blob/main/LICENSE)
+
 A lightweight, dependency-free **Result pattern** for .NET.
 
 Errors are values, not exceptions: every operation returns a result that either succeeded (optionally with a value) or failed with a typed `Error`, so failure shows up in the signature instead of in a `throw`.
@@ -209,6 +213,13 @@ An `Error` prints its code and type but never its message (`Error { Code = User.
 and a `ValidationError` lists only the field names. Log the `Code`, which is stable and safe, and keep user input
 out of `Message`: write `"Email is already in use."`, not `$"Email {email} is already in use."`.
 
+## Contributing
+
+Bug reports, ideas and pull requests are welcome. Read the
+[contributing guide](https://github.com/eovinicius/nothrow/blob/main/CONTRIBUTING.md) before opening a pull request,
+ask questions in [Discussions](https://github.com/eovinicius/nothrow/discussions), and report security issues
+privately as described in the [security policy](https://github.com/eovinicius/nothrow/blob/main/SECURITY.md).
+
 ## License
 
-MIT
+[MIT](https://github.com/eovinicius/nothrow/blob/main/LICENSE)
