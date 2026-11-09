@@ -12,7 +12,17 @@ breaking changes; they are always listed under **Breaking**.
 - `ErrorType` values from `1000` upwards are reserved for application-defined categories, e.g.
   `public const ErrorType RateLimited = (ErrorType)1000;`. Built-in members are only ever added below `1000`.
 
+### Changed
+
+- A `ValidationError` serialized with `System.Text.Json` where the declared type is `Error` (e.g. a property of type
+  `Error`) now includes its per-field `Errors`. Error types derived by applications are written as a plain `Error`.
+
 ### Breaking
+
+- `Result` and `Result<T>` are not a data contract: serializing or deserializing one with `System.Text.Json`
+  (reflection or source generation) throws `NotSupportedException` explaining what to do instead. Before, a failure
+  threw `InvalidOperationException` from `Value`, and a success wrote the value twice next to an empty error.
+  Unwrap results into your own types, or serialize their `Error`.
 
 - Creating an `Error` (constructor or `with`) with an `ErrorType` value that is neither a member nor `1000` or above
   throws `ArgumentOutOfRangeException`.

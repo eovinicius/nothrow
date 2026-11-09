@@ -160,6 +160,9 @@ public Task<Result<User>> FindAsync(Guid id) => Task.FromResult<Result<User>>(Us
 **Interfaces.** C# forbids user-defined conversions from an interface type, so when the expression's static type is an
 interface (e.g. an `IReadOnlyList<Order>` variable), return `Result.Success(list)` instead of `list`.
 
+**Returning or caching a result as JSON.** Serializing a `Result` throws `NotSupportedException`, on success too.
+Return a DTO built from the value, or the `Error`; see [Serialization](#serialization).
+
 **Asynchronous side effects.** Use `TapAsync` / `TapErrorAsync`, which await them. Passing an `async` delegate to the
 synchronous `Tap` / `TapError` is a compile error, so it can never run as fire-and-forget.
 
@@ -220,12 +223,35 @@ Assert.True(result.Error.Is(UserErrors.NotFound));
 
 ## Logging
 
-`ToString()` prints `Success` or `Failure(Code)` and never the value, so logging a result cannot leak
-the data it carries. The debugger still shows the value.
+`ToString()` prints `Success` or `Failure(Code)` and never the value, so a result formatted into a log message
+(`{Result}`) cannot leak the data it carries. The debugger still shows the value.
+
+That guarantee covers `ToString()` only. Structured loggers that destructure objects (Serilog's `{@Result}`) and
+reflection-based serializers such as Newtonsoft.Json read the public properties instead, `Value` and `Error.Message`
+included. Don't destructure results; log `result.Error.Code`.
 
 An `Error` prints its code and type but never its message (`Error { Code = User.EmailTaken, Type = Conflict }`),
 and a `ValidationError` lists only the field names. Log the `Code`, which is stable and safe, and keep user input
 out of `Message`: write `"Email is already in use."`, not `$"Email {email} is already in use."`.
+
+## Serialization
+
+A result is control flow, not a data contract. `System.Text.Json` refuses to convert one in either direction, with a
+`NotSupportedException` that says what to do: serialized as-is, a failure would throw from `Value` and a success
+would leak the value. Unwrap it into your own type at the boundary:
+
+```csharp
+public sealed record UserResponse(Guid Id, string Name);
+
+string json = result.Match(
+    onSuccess: user => JsonSerializer.Serialize(new UserResponse(user.Id, user.Name)),
+    onFailure: error => JsonSerializer.Serialize(error));
+```
+
+Errors are data. An `Error` is written as `{"Code":"User.NotFound","Message":"User not found.","Type":2}` and reads
+back. A `ValidationError` adds its per-field `Errors`, even where the declared type is `Error`; to read one back with
+them, deserialize it as `ValidationError`. An error type derived by your application is written as a plain `Error`.
+All of this works with source-generated `JsonSerializerContext`s, so it is safe for trimming and Native AOT.
 
 ## Contributing
 

@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json;
 
 namespace NoThrow.Tests;
 
@@ -207,5 +208,29 @@ public class ResultTests
 
         Assert.Equal(42, success.Value);
         Assert.Equal(NotFound, failure.Error);
+    }
+
+    [Fact]
+    public void Serialize_Throws()
+    {
+        foreach (var result in new[] { Result.Success(), Result.Failure(NotFound) })
+        {
+            AssertNotADataContract(() => JsonSerializer.Serialize(result));
+            AssertNotADataContract(() => JsonSerializer.Serialize(result, TestJsonContext.Default.Result));
+        }
+    }
+
+    [Fact]
+    public void Deserialize_Throws()
+    {
+        AssertNotADataContract(() => JsonSerializer.Deserialize<Result>("""{"IsSuccess":true}"""));
+        AssertNotADataContract(() => JsonSerializer.Deserialize("""{"IsSuccess":true}""", TestJsonContext.Default.Result));
+    }
+
+    internal static void AssertNotADataContract(Action serialize)
+    {
+        var exception = Assert.Throws<NotSupportedException>(serialize);
+
+        Assert.Contains("not a data contract", exception.Message);
     }
 }

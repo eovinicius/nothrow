@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace NoThrow.Tests;
 
 public class ErrorTests
@@ -311,4 +313,84 @@ public class ErrorTests
         var validation = Assert.IsType<ValidationError>(result.Error);
         Assert.Single(validation.Errors);
     }
+
+    [Fact]
+    public void Serialize_WritesCodeMessageAndType()
+    {
+        var error = Error.NotFound("User.NotFound", "User not found.");
+
+        const string expected = """{"Code":"User.NotFound","Message":"User not found.","Type":2}""";
+        Assert.Equal(expected, JsonSerializer.Serialize(error));
+        Assert.Equal(expected, JsonSerializer.Serialize(error, TestJsonContext.Default.Error));
+    }
+
+    [Fact]
+    public void Deserialize_RoundTrips()
+    {
+        var error = Error.Conflict("User.EmailTaken", "Email is already in use.");
+
+        Assert.Equal(error, JsonSerializer.Deserialize<Error>(JsonSerializer.Serialize(error)));
+        Assert.Equal(error, JsonSerializer.Deserialize(JsonSerializer.Serialize(error), TestJsonContext.Default.Error));
+    }
+
+    [Fact]
+    public void Deserialize_WithUndefinedType_Throws()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => JsonSerializer.Deserialize<Error>("""{"Code":"Some.Code","Message":"Some message.","Type":42}"""));
+    }
+
+    // e.g. `Results.BadRequest(result.Error)`: the declared type is Error, but the field errors must not be lost.
+    [Fact]
+    public void ValidationError_SerializedAsError_IncludesFieldErrors()
+    {
+        Error error = new ValidationError([Error.Validation("Email", "Email is required.")]);
+
+        const string expected =
+            """{"Errors":[{"Code":"Email","Message":"Email is required.","Type":1}],"Code":"Validation.Failed","Message":"One or more validation errors occurred.","Type":1}""";
+        Assert.Equal(expected, JsonSerializer.Serialize(error));
+        Assert.Equal(expected, JsonSerializer.Serialize(error, TestJsonContext.Default.Error));
+    }
+
+    [Fact]
+    public void ValidationError_RoundTrips()
+    {
+        var error = new ValidationError(
+            [Error.Validation("Email", "Email is required."), Error.Validation("Name", "Name is too long.")],
+            "The order is invalid.");
+
+        Assert.Equal(error, JsonSerializer.Deserialize<ValidationError>(JsonSerializer.Serialize(error)));
+        Assert.Equal(error, JsonSerializer.Deserialize(JsonSerializer.Serialize(error), TestJsonContext.Default.ValidationError));
+    }
+
+    // Without a type discriminator in the JSON, deserializing into Error cannot know it was a ValidationError.
+    [Fact]
+    public void ValidationError_DeserializedAsError_IsAPlainError()
+    {
+        var json = JsonSerializer.Serialize<Error>(new ValidationError([Error.Validation("Email", "Email is required.")]));
+
+        var error = JsonSerializer.Deserialize<Error>(json);
+
+        Assert.IsType<Error>(error);
+        Assert.Equal(ValidationError.DefaultCode, error!.Code);
+    }
+
+    [Fact]
+    public void ValidationError_DeserializeWithAnotherCode_Throws()
+    {
+        Assert.Throws<ArgumentException>(() => JsonSerializer.Deserialize<ValidationError>(
+            """{"Errors":[{"Code":"Email","Message":"Required.","Type":1}],"Code":"Other.Code","Message":"Invalid.","Type":1}"""));
+    }
+
+    [Fact]
+    public void Serialize_ApplicationDerivedError_FallsBackToError()
+    {
+        Error error = new DetailedError("Payment.Declined", "The payment was declined.", "card-ending-4242");
+
+        var json = JsonSerializer.Serialize(error);
+
+        Assert.Equal("""{"Code":"Payment.Declined","Message":"The payment was declined.","Type":0}""", json);
+    }
+
+    private sealed record DetailedError(string Code, string Message, string Detail) : Error(Code, Message, ErrorType.Failure);
 }
