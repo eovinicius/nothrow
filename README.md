@@ -27,6 +27,18 @@ public static class UserErrors
 }
 ```
 
+When no category fits, define your own from `1000` upwards; that range is reserved for applications, and any other
+value outside the list above is rejected:
+
+```csharp
+public static class ApiErrors
+{
+    public const ErrorType RateLimited = (ErrorType)1000;
+
+    public static readonly Error TooManyRequests = new("Api.TooManyRequests", "Too many requests.", RateLimited);
+}
+```
+
 Per-field failures are aggregated into a single `ValidationError`, so request and domain validation share one shape.
 By convention, **a validation error's `Code` is the field name**:
 
@@ -55,6 +67,8 @@ public sealed class Email
 
 A `ValidationError` requires at least one per-field error and rejects `null` and `Error.None`; a nested
 `ValidationError` is flattened into its per-field errors. Two of them are equal when their per-field errors are equal.
+Its code is always `Validation.Failed` and its type `Validation`: `with` can change its `Message`, but changing either of
+those throws.
 
 ## Handling results
 

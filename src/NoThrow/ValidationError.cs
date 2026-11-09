@@ -11,6 +11,8 @@ namespace NoThrow;
 /// and <see cref="Error.Message"/> as the message for that field.
 /// Nested validation errors are flattened into their per-field errors (their summary message is dropped).
 /// Two instances are equal when their code, message and per-field errors (in order) are equal.
+/// The code is always <see cref="DefaultCode"/> and the type always <see cref="ErrorType.Validation"/>:
+/// <c>with</c> can change the <see cref="Error.Message"/>, but changing either of those throws an <see cref="ArgumentException"/>.
 /// </remarks>
 public sealed record ValidationError : Error
 {
@@ -46,6 +48,8 @@ public sealed record ValidationError : Error
 
     /// <summary>The per-field errors. Never contains another <see cref="ValidationError"/>.</summary>
     public IReadOnlyList<Error> Errors { get; }
+
+    private protected override bool HasFixedCodeAndType => true;
 
     /// <summary>Whether <paramref name="other"/> has the same code, message and per-field errors, in order.</summary>
     public bool Equals(ValidationError? other) =>

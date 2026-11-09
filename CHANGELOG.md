@@ -7,6 +7,18 @@ breaking changes; they are always listed under **Breaking**.
 
 ## [Unreleased]
 
+### Added
+
+- `ErrorType` values from `1000` upwards are reserved for application-defined categories, e.g.
+  `public const ErrorType RateLimited = (ErrorType)1000;`. Built-in members are only ever added below `1000`.
+
+### Breaking
+
+- Creating an `Error` (constructor or `with`) with an `ErrorType` value that is neither a member nor `1000` or above
+  throws `ArgumentOutOfRangeException`.
+- Changing the `Code` or `Type` of a `ValidationError` through `with` or an object initializer throws
+  `ArgumentException`; changing its `Message` is still allowed.
+
 ## [0.1.0] - 2026-11-08
 
 First release under the NoThrow name. The package was previously published as `Veredito` (`0.1.0-preview.1`),
