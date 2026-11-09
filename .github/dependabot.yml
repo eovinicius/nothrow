@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Keeps the SHA-pinned actions current; Dependabot updates the SHA and the version comment together.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']
+
+  # Only the tests and the benchmarks have package references: the library itself is dependency-free.
+  - package-ecosystem: nuget
+    directories:
+      - /tests/NoThrow.Tests
+      - /benchmarks/NoThrow.Benchmarks
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: build
+    groups:
+      test-and-benchmark:
+        patterns: ['*']
