@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace NoThrow;
 
@@ -11,14 +12,24 @@ namespace NoThrow;
 /// The category of the failure: a member of <see cref="ErrorType"/>, or an application-defined value from 1000 upwards.
 /// </param>
 /// <remarks>
+/// <para>
 /// Not sealed so that <see cref="ValidationError"/> can extend it.
 /// <see cref="ToString"/> prints <see cref="Code"/> and <see cref="Type"/> but never <see cref="Message"/>,
 /// so logging an error cannot leak data embedded in its message.
+/// </para>
+/// <para>
+/// An error is a data contract: <c>System.Text.Json</c> writes it as <c>{"Code":…,"Message":…,"Type":…}</c> and reads
+/// it back. Declared as <see cref="Error"/>, a <see cref="ValidationError"/> also writes its <c>Errors</c> (it reads
+/// back as a plain <see cref="Error"/>; declare <see cref="ValidationError"/> to keep them), and an error type derived
+/// by the application is written as an <see cref="Error"/>.
+/// </para>
 /// </remarks>
 /// <exception cref="ArgumentNullException"><paramref name="Code"/> or <paramref name="Message"/> is <see langword="null"/>.</exception>
 /// <exception cref="ArgumentOutOfRangeException">
 /// <paramref name="Type"/> is neither a member of <see cref="ErrorType"/> nor an application-defined value (1000 and above).
 /// </exception>
+[JsonPolymorphic(UnknownDerivedTypeHandling = JsonUnknownDerivedTypeHandling.FallBackToNearestAncestor)]
+[JsonDerivedType(typeof(ValidationError))]
 public record Error(string Code, string Message, ErrorType Type)
 {
     // ErrorType values from here upwards are reserved for application-defined categories.

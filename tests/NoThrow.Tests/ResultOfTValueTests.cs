@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace NoThrow.Tests;
 
 public class ResultOfTValueTests
@@ -197,5 +199,31 @@ public class ResultOfTValueTests
 
         Assert.Same(failure, result);
         Assert.Equal(0, calls);
+    }
+
+    // Before results rejected serialization, a failure threw from the Value getter and a success leaked the value.
+    [Fact]
+    public void Serialize_Throws()
+    {
+        foreach (var result in new[] { Result.Success(42), Result.Failure<int>(NotFound) })
+        {
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize(result));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize<object>(result));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize<Result>(result));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize(new ResultHolder(result)));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize(new List<Result<int>> { result }));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize(result, TestJsonContext.Default.ResultInt32));
+            ResultTests.AssertNotADataContract(() => JsonSerializer.Serialize(new ResultHolder(result), TestJsonContext.Default.ResultHolder));
+        }
+    }
+
+    [Fact]
+    public void Deserialize_Throws()
+    {
+        const string json = """{"IsSuccess":true,"Value":42}""";
+
+        ResultTests.AssertNotADataContract(() => JsonSerializer.Deserialize<Result<int>>(json));
+        ResultTests.AssertNotADataContract(() => JsonSerializer.Deserialize<ResultHolder>($$"""{"Result":{{json}}}"""));
+        ResultTests.AssertNotADataContract(() => JsonSerializer.Deserialize(json, TestJsonContext.Default.ResultInt32));
     }
 }

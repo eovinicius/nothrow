@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
 
 namespace NoThrow;
 
@@ -7,9 +8,17 @@ namespace NoThrow;
 /// The outcome of an operation that returns no value: either a success or a failure carrying an <see cref="NoThrow.Error"/>.
 /// </summary>
 /// <remarks>
+/// <para>
 /// An <see cref="NoThrow.Error"/> converts implicitly into a failed <see cref="Result"/>, so a method can simply
 /// <c>return UserErrors.NotFound;</c>.
+/// </para>
+/// <para>
+/// A result is not a data contract: <c>System.Text.Json</c> throws <see cref="NotSupportedException"/> when asked to
+/// serialize or deserialize one (see <see cref="ResultJsonConverter"/>). Unwrap it into your own type, or serialize
+/// its <see cref="Error"/>.
+/// </para>
 /// </remarks>
+[JsonConverter(typeof(ResultJsonConverter))]
 public class Result
 {
     private static readonly Result SuccessResult = new(true, Error.None);
@@ -187,8 +196,10 @@ public class Result
 /// <see cref="Result{TValue}"/>, so a method can <c>return user;</c> or <c>return UserErrors.NotFound;</c>.
 /// C# forbids user-defined conversions from an interface type, so when <typeparamref name="TValue"/> is an
 /// interface (e.g. <c>IReadOnlyList&lt;T&gt;</c>) use <see cref="Result.Success{TValue}(TValue)"/> instead.
+/// Like <see cref="Result"/>, it cannot be converted to or from JSON.
 /// </remarks>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
+[JsonConverter(typeof(ResultJsonConverter))]
 public sealed class Result<TValue> : Result
 {
     private readonly TValue? _value;
