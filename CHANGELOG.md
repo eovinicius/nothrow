@@ -7,6 +7,8 @@ breaking changes; they are always listed under **Breaking**.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-09
+
 ### Added
 
 - `ErrorType` values from `1000` upwards are reserved for application-defined categories, e.g.
