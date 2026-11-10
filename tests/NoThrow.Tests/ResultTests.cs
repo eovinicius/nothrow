@@ -211,6 +211,49 @@ public class ResultTests
     }
 
     [Fact]
+    public void Combine_WithASingleValidationError_KeepsTheSameInstance()
+    {
+        var validation = new ValidationError([Error.Validation("Email", "Email is required.")], "The order is invalid.");
+
+        var result = Result.Combine(Result.Success(), Result.Failure(validation));
+
+        Assert.Same(validation, result.Error);
+        Assert.Equal("The order is invalid.", result.Error.Message);
+    }
+
+    [Fact]
+    public void Combine_MergesSeveralValidationErrorsWithTheDefaultMessage()
+    {
+        var first = new ValidationError([Error.Validation("Email", "Email is required.")], "Custom message.");
+
+        var result = Result.Combine(Result.Failure(first), Result.Failure(Error.Validation("Name", "Name is too long.")));
+
+        var merged = Assert.IsType<ValidationError>(result.Error);
+        Assert.Equal(["Email", "Name"], merged.Errors.Select(field => field.Code));
+        Assert.Equal(ValidationError.DefaultMessage, merged.Message);
+    }
+
+    // Arguments are validated even on the branch that would not use them.
+    [Fact]
+    public void Combinators_WithNullDelegate_Throw()
+    {
+        var success = Result.Success();
+        var failure = Result.Failure(NotFound);
+
+        Assert.Throws<ArgumentNullException>(() => success.Match(() => 1, null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Match(null!, _ => 1));
+        Assert.Throws<ArgumentNullException>(() => failure.Bind((Func<Result>)null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Bind((Func<Result<int>>)null!));
+    }
+
+    [Fact]
+    public void Create_WithNullErrorIfNull_Throws()
+    {
+        Assert.Throws<ArgumentNullException>(() => Result.Create("value", null!));
+        Assert.Throws<ArgumentNullException>(() => Result.Create<string>(null, null!));
+    }
+
+    [Fact]
     public void Serialize_Throws()
     {
         foreach (var result in new[] { Result.Success(), Result.Failure(NotFound) })

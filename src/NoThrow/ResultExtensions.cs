@@ -9,6 +9,8 @@ namespace NoThrow;
 /// <remarks>
 /// They are extensions rather than instance methods because an instance method declared on <see cref="Result"/>
 /// would return a plain <see cref="Result"/> when called on a <see cref="Result{TValue}"/>, losing the value.
+/// Every argument is checked for <see langword="null"/> on every call, whatever the outcome, so a mistake shows up
+/// the first time the code runs rather than on the first failure.
 /// </remarks>
 public static class ResultExtensions
 {
@@ -16,8 +18,13 @@ public static class ResultExtensions
     /// Keeps the result when <paramref name="predicate"/> holds for its value, and fails with
     /// <paramref name="error"/> otherwise. An existing failure is propagated without running the predicate.
     /// </summary>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     public static Result<TValue> Ensure<TValue>(this Result<TValue> result, Func<TValue, bool> predicate, Error error)
     {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(predicate);
+        ArgumentNullException.ThrowIfNull(error);
+
         if (result.IsFailure || predicate(result.Value))
         {
             return result;
@@ -27,9 +34,13 @@ public static class ResultExtensions
     }
 
     /// <summary>Runs <paramref name="action"/> on success, then returns the same result.</summary>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     public static TResult Tap<TResult>(this TResult result, Action action)
         where TResult : Result
     {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(action);
+
         if (result.IsSuccess)
         {
             action();
@@ -39,8 +50,12 @@ public static class ResultExtensions
     }
 
     /// <summary>Runs <paramref name="action"/> with the value on success, then returns the same result.</summary>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     public static Result<TValue> Tap<TValue>(this Result<TValue> result, Action<TValue> action)
     {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(action);
+
         if (result.IsSuccess)
         {
             action(result.Value);
@@ -50,9 +65,13 @@ public static class ResultExtensions
     }
 
     /// <summary>Runs <paramref name="action"/> with the error on failure, then returns the same result.</summary>
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
     public static TResult TapError<TResult>(this TResult result, Action<Error> action)
         where TResult : Result
     {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(action);
+
         if (result.IsFailure)
         {
             action(result.Error);
@@ -88,10 +107,22 @@ public static class ResultExtensions
         throw new NotSupportedException("TapError does not await asynchronous actions; use TapErrorAsync instead.");
 
     /// <summary>Replaces the error on failure with <paramref name="map"/>'s output; returns the same result on success.</summary>
-    public static Result MapError(this Result result, Func<Error, Error> map) =>
-        result.IsSuccess ? result : Result.Failure(map(result.Error));
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    public static Result MapError(this Result result, Func<Error, Error> map)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(map);
+
+        return result.IsSuccess ? result : Result.Failure(map(result.Error));
+    }
 
     /// <summary>Replaces the error on failure with <paramref name="map"/>'s output; returns the same result on success.</summary>
-    public static Result<TValue> MapError<TValue>(this Result<TValue> result, Func<Error, Error> map) =>
-        result.IsSuccess ? result : Result.Failure<TValue>(map(result.Error));
+    /// <exception cref="ArgumentNullException">An argument is <see langword="null"/>.</exception>
+    public static Result<TValue> MapError<TValue>(this Result<TValue> result, Func<Error, Error> map)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        ArgumentNullException.ThrowIfNull(map);
+
+        return result.IsSuccess ? result : Result.Failure<TValue>(map(result.Error));
+    }
 }

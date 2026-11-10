@@ -101,7 +101,8 @@ public async Task<Result<Guid>> Handle(PlaceOrder command)
 ```
 
 `Result.Combine` inspects every result instead of stopping at the first failure. Validation failures are merged into
-a single `ValidationError`; any other failure wins, in argument order. Reading `Value` on a failure throws, so read it
+a single `ValidationError` (a lone `ValidationError` is returned as is, keeping its message); any other failure wins,
+in argument order. Reading `Value` on a failure throws, so read it
 only after the check; `ValueOrDefault` never throws.
 
 ## Creating results
@@ -205,6 +206,10 @@ string text = await _users.FindAsync(userId)                 // Task<Result<User
     .TapAsync(async id => await _bus.PublishAsync(new OrderCreated(id)))   // awaited side effect
     .MatchAsync(id => $"Order {id} created", error => error.Message);
 ```
+
+Every combinator checks its arguments on every call: a `null` delegate throws `ArgumentNullException` even when the
+outcome would not have used it. The `*Async` methods throw it from the call itself, while anything your delegates
+throw, even before returning a task, comes out of the returned task when you await it.
 
 ## Testing
 
