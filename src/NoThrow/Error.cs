@@ -14,9 +14,10 @@ namespace NoThrow;
 /// </param>
 /// <remarks>
 /// <para>
-/// Not sealed so that <see cref="ValidationError"/> can extend it.
-/// <see cref="ToString"/> prints <see cref="Code"/> and <see cref="Type"/> but never <see cref="Message"/>,
-/// so logging an error cannot leak data embedded in its message.
+/// Not sealed: <see cref="ValidationError"/> extends it, and an application may derive its own error records to carry
+/// extra data. <see cref="ToString"/> prints <see cref="Code"/> and <see cref="Type"/> but never <see cref="Message"/>,
+/// so logging an error cannot leak data embedded in its message; it is sealed, so the same holds for derived records,
+/// whose extra members are never printed.
 /// </para>
 /// <para>
 /// An error is a data contract: <c>System.Text.Json</c> writes it as <c>{"Code":…,"Message":…,"Type":…}</c> and reads
@@ -141,13 +142,35 @@ public record Error(string Code, string Message, ErrorType Type)
         return string.Equals(Code, other.Code, StringComparison.Ordinal) && Type == other.Type;
     }
 
+    /// <summary>
+    /// Describes the error by type name, <see cref="Code"/> and <see cref="Type"/>, e.g.
+    /// <c>Error { Code = User.NotFound, Type = NotFound }</c>; never <see cref="Message"/>, which may carry user data.
+    /// </summary>
+    /// <remarks>
+    /// Sealed, so that error records derived by an application print the same members and cannot leak their own
+    /// (C# records would otherwise generate a <c>ToString</c> listing every property of the derived type).
+    /// </remarks>
+    public sealed override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append(GetType().Name).Append(" { ");
+        AppendSafeMembers(builder);
+
+        return builder.Append(" }").ToString();
+    }
+
     /// <summary>Prints <see cref="Code"/> and <see cref="Type"/>; <see cref="Message"/> is left out because it may carry user data.</summary>
     protected virtual bool PrintMembers(StringBuilder builder)
     {
-        builder.Append("Code = ").Append(Code).Append(", Type = ").Append(Type);
+        AppendSafeMembers(builder);
 
         return true;
     }
+
+    // The members ToString shows. Only types in this assembly can add to them (ValidationError adds its field names),
+    // which is what keeps application-derived errors from printing anything else.
+    private protected virtual void AppendSafeMembers(StringBuilder builder) =>
+        builder.Append("Code = ").Append(Code).Append(", Type = ").Append(Type);
 
     // A range check rather than Enum.IsDefined: no cost on every error created. A test checks that it accepts every
     // member, so a member added after Conflict fails it until the upper bound here is updated.

@@ -240,6 +240,16 @@ An `Error` prints its code and type but never its message (`Error { Code = User.
 and a `ValidationError` lists only the field names. Log the `Code`, which is stable and safe, and keep user input
 out of `Message`: write `"Email is already in use."`, not `$"Email {email} is already in use."`.
 
+You can derive your own error records from `Error` to carry extra data. `ToString` is sealed, so a derived error still
+prints only its type name, code and error type, never the members you add:
+
+```csharp
+public sealed record PaymentDeclined(string CardSuffix)
+    : Error("Payment.Declined", "The payment was declined.", ErrorType.Failure);
+
+// new PaymentDeclined("4242").ToString() == "PaymentDeclined { Code = Payment.Declined, Type = Failure }"
+```
+
 ## Serialization
 
 A result is control flow, not a data contract. `System.Text.Json` refuses to convert one in either direction, with a

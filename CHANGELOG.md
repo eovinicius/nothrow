@@ -35,6 +35,10 @@ breaking changes; they are always listed under **Breaking**.
   an exception thrown by a delegate, even before it returns a task, surfaces through the returned task. Before,
   `BindAsync` and `MatchAsync` on a `Result`/`Result<T>` let such an exception escape the call, and a `null` argument
   could surface as a `NullReferenceException` when awaited.
+- `Error.ToString()` is sealed, so error records derived by applications print only their type name, `Code` and
+  `Type`, like every other error, instead of listing their own members. A derived error compiled against `0.1.0`
+  must be recompiled (loading it otherwise fails with `TypeLoadException`), and one that overrides `ToString` no longer
+  compiles.
 - Creating an `Error` (constructor or `with`) with an `ErrorType` value that is neither a member nor `1000` or above
   throws `ArgumentOutOfRangeException`.
 - Changing the `Code` or `Type` of a `ValidationError` through `with` or an object initializer throws
