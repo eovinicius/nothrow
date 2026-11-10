@@ -69,19 +69,18 @@ public sealed record ValidationError : Error
         return hash.ToHashCode();
     }
 
-    /// <summary>Appends the field names; their messages are left out because they may carry user data.</summary>
-    protected override bool PrintMembers(StringBuilder builder)
-    {
-        if (base.PrintMembers(builder))
-        {
-            builder.Append(", ");
-        }
+    // Declared so the compiler does not generate one listing every property; the base prints AppendSafeMembers.
 
-        builder.Append("Errors = [");
+    /// <summary>Prints the code, type and field names; messages are left out because they may carry user data.</summary>
+    protected override bool PrintMembers(StringBuilder builder) => base.PrintMembers(builder);
+
+    private protected override void AppendSafeMembers(StringBuilder builder)
+    {
+        base.AppendSafeMembers(builder);
+
+        builder.Append(", Errors = [");
         builder.AppendJoin(", ", _errors.Select(error => error.Code));
         builder.Append(']');
-
-        return true;
     }
 
     // Nested validation errors are already flat by construction, so one level of unwrapping is enough.

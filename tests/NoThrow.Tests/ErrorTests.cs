@@ -116,6 +116,16 @@ public class ErrorTests
         Assert.DoesNotContain("joao@exemplo.com", text);
     }
 
+    // ToString is sealed in Error: a record an application derives from it cannot print its own members.
+    [Fact]
+    public void ToString_OfADerivedError_ShowsOnlyCodeAndType()
+    {
+        var text = new DetailedError("Payment.Declined", "The card ending 4242 was declined.", "card-ending-4242").ToString();
+
+        Assert.Equal("DetailedError { Code = Payment.Declined, Type = Failure }", text);
+        Assert.DoesNotContain("4242", text);
+    }
+
     [Fact]
     public void Is_MatchesOnCodeAndTypeIgnoringTheMessage()
     {
