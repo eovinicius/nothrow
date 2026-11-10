@@ -201,6 +201,20 @@ public class ResultOfTValueTests
         Assert.Equal(0, calls);
     }
 
+    // Arguments are validated even on the branch that would not use them.
+    [Fact]
+    public void Combinators_WithNullDelegate_Throw()
+    {
+        var success = Result.Success(42);
+        var failure = Result.Failure<int>(NotFound);
+
+        Assert.Throws<ArgumentNullException>(() => success.Match(value => value, null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Match(null!, _ => 0));
+        Assert.Throws<ArgumentNullException>(() => failure.Map((Func<int, string>)null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Bind((Func<int, Result>)null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Bind((Func<int, Result<string>>)null!));
+    }
+
     // Before results rejected serialization, a failure threw from the Value getter and a success leaked the value.
     [Fact]
     public void Serialize_Throws()

@@ -275,6 +275,115 @@ public class ResultAsyncExtensionsTests
             }));
     }
 
+    // A null argument is a usage error: it throws from the call itself, before any task exists (the TAP convention).
+    private static void ThrowsSynchronously(Func<Task> call) =>
+        Assert.Throws<ArgumentNullException>(() => { _ = call(); });
+
+    [Fact]
+    public void OnResult_WithNullArgument_ThrowsSynchronously()
+    {
+        var success = Result.Success();
+        var failure = Result.Failure(NotFound);
+        var value = Result.Success(42);
+        var valueFailure = Result.Failure<int>(NotFound);
+
+        ThrowsSynchronously(() => ((Result)null!).BindAsync(() => AsTask(success)));
+        ThrowsSynchronously(() => failure.BindAsync((Func<Task<Result>>)null!));
+        ThrowsSynchronously(() => failure.BindAsync((Func<Task<Result<int>>>)null!));
+        ThrowsSynchronously(() => failure.MatchAsync(null!, _ => Task.FromResult(0)));
+        ThrowsSynchronously(() => success.MatchAsync(() => Task.FromResult(0), null!));
+        ThrowsSynchronously(() => ((Result<int>)null!).MapAsync(v => Task.FromResult(v)));
+        ThrowsSynchronously(() => valueFailure.MapAsync((Func<int, Task<int>>)null!));
+        ThrowsSynchronously(() => valueFailure.BindAsync((Func<int, Task<Result>>)null!));
+        ThrowsSynchronously(() => valueFailure.BindAsync((Func<int, Task<Result<int>>>)null!));
+        ThrowsSynchronously(() => valueFailure.EnsureAsync(null!, Negative));
+        ThrowsSynchronously(() => value.EnsureAsync(_ => Task.FromResult(true), null!));
+        ThrowsSynchronously(() => valueFailure.MatchAsync(null!, _ => Task.FromResult(0)));
+        ThrowsSynchronously(() => value.MatchAsync(v => Task.FromResult(v), null!));
+        ThrowsSynchronously(() => ((Result)null!).TapAsync(() => Task.CompletedTask));
+        ThrowsSynchronously(() => failure.TapAsync((Func<Task>)null!));
+        ThrowsSynchronously(() => valueFailure.TapAsync((Func<int, Task>)null!));
+        ThrowsSynchronously(() => ((Result)null!).TapErrorAsync(_ => Task.CompletedTask));
+        ThrowsSynchronously(() => success.TapErrorAsync(null!));
+    }
+
+    [Fact]
+    public void OnTaskOfResult_WithNullArgument_ThrowsSynchronously()
+    {
+        var task = AsTask(Result.Failure(NotFound));
+        Task<Result> nothing = null!;
+
+        ThrowsSynchronously(() => nothing.BindAsync(() => Result.Success()));
+        ThrowsSynchronously(() => task.BindAsync((Func<Result>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<Task<Result>>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<Result<int>>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<Task<Result<int>>>)null!));
+        ThrowsSynchronously(() => task.MatchAsync((Func<int>)null!, _ => 0));
+        ThrowsSynchronously(() => task.MatchAsync(() => 0, (Func<Error, int>)null!));
+        ThrowsSynchronously(() => task.MatchAsync((Func<Task<int>>)null!, _ => Task.FromResult(0)));
+        ThrowsSynchronously(() => task.MatchAsync(() => Task.FromResult(0), (Func<Error, Task<int>>)null!));
+        ThrowsSynchronously(() => task.TapAsync((Action)null!));
+        ThrowsSynchronously(() => task.TapAsync((Func<Task>)null!));
+        ThrowsSynchronously(() => task.TapErrorAsync((Action<Error>)null!));
+        ThrowsSynchronously(() => task.TapErrorAsync((Func<Error, Task>)null!));
+        ThrowsSynchronously(() => nothing.MapErrorAsync(_ => NotFound));
+        ThrowsSynchronously(() => task.MapErrorAsync(null!));
+    }
+
+    [Fact]
+    public void OnTaskOfResultOfTValue_WithNullArgument_ThrowsSynchronously()
+    {
+        var task = AsTask(Result.Failure<int>(NotFound));
+        Task<Result<int>> nothing = null!;
+
+        ThrowsSynchronously(() => nothing.MapAsync(v => v));
+        ThrowsSynchronously(() => task.MapAsync((Func<int, int>)null!));
+        ThrowsSynchronously(() => task.MapAsync((Func<int, Task<int>>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<int, Result>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<int, Task<Result>>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<int, Result<int>>)null!));
+        ThrowsSynchronously(() => task.BindAsync((Func<int, Task<Result<int>>>)null!));
+        ThrowsSynchronously(() => task.EnsureAsync((Func<int, bool>)null!, Negative));
+        ThrowsSynchronously(() => task.EnsureAsync(_ => true, null!));
+        ThrowsSynchronously(() => task.EnsureAsync((Func<int, Task<bool>>)null!, Negative));
+        ThrowsSynchronously(() => task.EnsureAsync(_ => Task.FromResult(true), null!));
+        ThrowsSynchronously(() => task.MatchAsync((Func<int, int>)null!, _ => 0));
+        ThrowsSynchronously(() => task.MatchAsync(v => v, (Func<Error, int>)null!));
+        ThrowsSynchronously(() => task.MatchAsync((Func<int, Task<int>>)null!, _ => Task.FromResult(0)));
+        ThrowsSynchronously(() => task.MatchAsync(v => Task.FromResult(v), (Func<Error, Task<int>>)null!));
+        ThrowsSynchronously(() => task.TapAsync((Action)null!));
+        ThrowsSynchronously(() => task.TapAsync((Action<int>)null!));
+        ThrowsSynchronously(() => task.TapAsync((Func<Task>)null!));
+        ThrowsSynchronously(() => task.TapAsync((Func<int, Task>)null!));
+        ThrowsSynchronously(() => task.TapErrorAsync((Action<Error>)null!));
+        ThrowsSynchronously(() => task.TapErrorAsync((Func<Error, Task>)null!));
+        ThrowsSynchronously(() => nothing.MapErrorAsync(_ => NotFound));
+        ThrowsSynchronously(() => task.MapErrorAsync(null!));
+    }
+
+    // An exception thrown by a delegate, even before it returns a task, surfaces through the returned task.
+    [Fact]
+    public async Task OnResult_WhenADelegateThrowsSynchronously_ReturnsAFaultedTask()
+    {
+        var success = Result.Success();
+        var failure = Result.Failure(NotFound);
+        var value = Result.Success(42);
+        var valueFailure = Result.Failure<int>(NotFound);
+
+        await FaultsWithBoom(success.BindAsync((Func<Task<Result>>)(() => throw new InvalidOperationException("boom"))));
+        await FaultsWithBoom(success.BindAsync((Func<Task<Result<int>>>)(() => throw new InvalidOperationException("boom"))));
+        await FaultsWithBoom(failure.MatchAsync(() => Task.FromResult(0), _ => throw new InvalidOperationException("boom")));
+        await FaultsWithBoom(value.BindAsync((Func<int, Task<Result>>)(_ => throw new InvalidOperationException("boom"))));
+        await FaultsWithBoom(value.BindAsync((Func<int, Task<Result<int>>>)(_ => throw new InvalidOperationException("boom"))));
+        await FaultsWithBoom(valueFailure.MatchAsync(v => Task.FromResult(v), _ => throw new InvalidOperationException("boom")));
+
+        static async Task FaultsWithBoom(Task task)
+        {
+            Assert.True(task.IsFaulted);
+            Assert.Equal("boom", (await Assert.ThrowsAsync<InvalidOperationException>(() => task)).Message);
+        }
+    }
+
     private sealed record Order(int Id, decimal Total);
 
     private static readonly Error Declined = Error.Failure("Payment.Declined", "Payment declined.");

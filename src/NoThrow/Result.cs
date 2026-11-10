@@ -91,8 +91,13 @@ public class Result
     /// Result&lt;Order&gt; order = Result.Create(repository.Find(id), OrderErrors.NotFound);
     /// </code>
     /// </example>
-    public static Result<TValue> Create<TValue>(TValue? value, Error errorIfNull) =>
-        value is not null ? new(value, true, Error.None) : Failure<TValue>(errorIfNull);
+    /// <exception cref="ArgumentNullException"><paramref name="errorIfNull"/> is <see langword="null"/>, whatever the value.</exception>
+    public static Result<TValue> Create<TValue>(TValue? value, Error errorIfNull)
+    {
+        ArgumentNullException.ThrowIfNull(errorIfNull);
+
+        return value is not null ? new(value, true, Error.None) : Failure<TValue>(errorIfNull);
+    }
 
     /// <summary>
     /// Combines several results, inspecting all of them instead of stopping at the first failure.
@@ -102,7 +107,9 @@ public class Result
     /// <item>Every result succeeded (or none was given): the shared <see cref="Success()"/>.</item>
     /// <item>Some failed with a type other than <see cref="ErrorType.Validation"/>: the first such error, in argument order.</item>
     /// <item>Otherwise: a single <see cref="ValidationError"/> holding every validation error, flattened and in argument order.
-    /// Each error's <see cref="Error.Code"/> is used as its field name.</item>
+    /// Each error's <see cref="Error.Code"/> is used as its field name. When the only failure already is a
+    /// <see cref="ValidationError"/>, that same instance is returned, keeping its message; merging several uses
+    /// <see cref="ValidationError.DefaultMessage"/>.</item>
     /// </list>
     /// </remarks>
     /// <example>
@@ -150,7 +157,13 @@ public class Result
             return Failure(firstNonValidation);
         }
 
-        return validationErrors is null ? SuccessResult : Failure(new ValidationError(validationErrors));
+        if (validationErrors is null)
+        {
+            return SuccessResult;
+        }
+
+        // A lone ValidationError is kept as is: re-wrapping it would allocate and drop its custom message.
+        return Failure(validationErrors is [ValidationError single] ? single : new ValidationError(validationErrors));
     }
 
     /// <summary>Gets the error when the result is a failure.</summary>
@@ -169,16 +182,32 @@ public class Result
     }
 
     /// <summary>Returns <paramref name="onSuccess"/>'s output on success, or <paramref name="onFailure"/>'s output on failure.</summary>
-    public TOut Match<TOut>(Func<TOut> onSuccess, Func<Error, TOut> onFailure) =>
-        IsSuccess ? onSuccess() : onFailure(Error);
+    /// <exception cref="ArgumentNullException">A delegate is <see langword="null"/>, whatever the outcome.</exception>
+    public TOut Match<TOut>(Func<TOut> onSuccess, Func<Error, TOut> onFailure)
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+
+        return IsSuccess ? onSuccess() : onFailure(Error);
+    }
 
     /// <summary>Runs <paramref name="next"/> on success; propagates the failure otherwise.</summary>
-    public Result Bind(Func<Result> next) =>
-        IsSuccess ? next() : this;
+    /// <exception cref="ArgumentNullException"><paramref name="next"/> is <see langword="null"/>, whatever the outcome.</exception>
+    public Result Bind(Func<Result> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsSuccess ? next() : this;
+    }
 
     /// <summary>Runs <paramref name="next"/> on success; propagates the failure otherwise.</summary>
-    public Result<TOut> Bind<TOut>(Func<Result<TOut>> next) =>
-        IsSuccess ? next() : Failure<TOut>(Error);
+    /// <exception cref="ArgumentNullException"><paramref name="next"/> is <see langword="null"/>, whatever the outcome.</exception>
+    public Result<TOut> Bind<TOut>(Func<Result<TOut>> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsSuccess ? next() : Failure<TOut>(Error);
+    }
 
     /// <summary>Converts an <see cref="NoThrow.Error"/> into a failed result.</summary>
     public static implicit operator Result(Error error) => Failure(error);
@@ -233,23 +262,44 @@ public sealed class Result<TValue> : Result
     private string DebuggerDisplay => IsSuccess ? $"Success({_value})" : $"Failure({Error.Code})";
 
     /// <summary>Returns <paramref name="onSuccess"/>'s output on success, or <paramref name="onFailure"/>'s output on failure.</summary>
-    public TOut Match<TOut>(Func<TValue, TOut> onSuccess, Func<Error, TOut> onFailure) =>
-        IsSuccess ? onSuccess(_value!) : onFailure(Error);
+    /// <exception cref="ArgumentNullException">A delegate is <see langword="null"/>, whatever the outcome.</exception>
+    public TOut Match<TOut>(Func<TValue, TOut> onSuccess, Func<Error, TOut> onFailure)
+    {
+        ArgumentNullException.ThrowIfNull(onSuccess);
+        ArgumentNullException.ThrowIfNull(onFailure);
+
+        return IsSuccess ? onSuccess(_value!) : onFailure(Error);
+    }
 
     /// <summary>
     /// Transforms the value on success; propagates the failure otherwise.
     /// A <see langword="null"/> output becomes a failure carrying <see cref="Error.NullValue"/>.
     /// </summary>
-    public Result<TOut> Map<TOut>(Func<TValue, TOut> map) =>
-        IsSuccess ? Create(map(_value!)) : Failure<TOut>(Error);
+    /// <exception cref="ArgumentNullException"><paramref name="map"/> is <see langword="null"/>, whatever the outcome.</exception>
+    public Result<TOut> Map<TOut>(Func<TValue, TOut> map)
+    {
+        ArgumentNullException.ThrowIfNull(map);
+
+        return IsSuccess ? Create(map(_value!)) : Failure<TOut>(Error);
+    }
 
     /// <summary>Runs <paramref name="next"/> with the value on success; returns this same failure otherwise.</summary>
-    public Result Bind(Func<TValue, Result> next) =>
-        IsSuccess ? next(_value!) : this;
+    /// <exception cref="ArgumentNullException"><paramref name="next"/> is <see langword="null"/>, whatever the outcome.</exception>
+    public Result Bind(Func<TValue, Result> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsSuccess ? next(_value!) : this;
+    }
 
     /// <summary>Runs <paramref name="next"/> with the value on success; propagates the failure otherwise.</summary>
-    public Result<TOut> Bind<TOut>(Func<TValue, Result<TOut>> next) =>
-        IsSuccess ? next(_value!) : Failure<TOut>(Error);
+    /// <exception cref="ArgumentNullException"><paramref name="next"/> is <see langword="null"/>, whatever the outcome.</exception>
+    public Result<TOut> Bind<TOut>(Func<TValue, Result<TOut>> next)
+    {
+        ArgumentNullException.ThrowIfNull(next);
+
+        return IsSuccess ? next(_value!) : Failure<TOut>(Error);
+    }
 
     /// <summary>Gets the value when the result is a success.</summary>
     /// <param name="value">The value on success; <see langword="default"/> on failure.</param>

@@ -95,4 +95,25 @@ public class ResultExtensionsTests
 
         Assert.Same(success, returned);
     }
+
+    // Arguments are validated even on the branch that would not use them.
+    [Fact]
+    public void Combinators_WithNullArgument_Throw()
+    {
+        var success = Result.Success(42);
+        var failure = Result.Failure<int>(NotFound);
+        Result<int> nothing = null!;
+
+        Assert.Throws<ArgumentNullException>(() => nothing.Ensure(_ => true, Negative));
+        Assert.Throws<ArgumentNullException>(() => failure.Ensure(null!, Negative));
+        Assert.Throws<ArgumentNullException>(() => success.Ensure(_ => true, null!));
+        Assert.Throws<ArgumentNullException>(() => nothing.Tap(() => { }));
+        Assert.Throws<ArgumentNullException>(() => failure.Tap((Action)null!));
+        Assert.Throws<ArgumentNullException>(() => failure.Tap((Action<int>)null!));
+        Assert.Throws<ArgumentNullException>(() => nothing.TapError(_ => { }));
+        Assert.Throws<ArgumentNullException>(() => success.TapError((Action<Error>)null!));
+        Assert.Throws<ArgumentNullException>(() => ((Result)null!).MapError(_ => NotFound));
+        Assert.Throws<ArgumentNullException>(() => success.MapError(null!));
+        Assert.Throws<ArgumentNullException>(() => ((Result)success).MapError(null!));
+    }
 }
