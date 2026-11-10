@@ -6,7 +6,7 @@
   <PropertyGroup>
     <!-- Supported LTS releases only, from net8.0 onwards. -->
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionPrefix>0.2.0</VersionPrefix>
     <Authors>Vinicius</Authors>
     <Copyright>Copyright (c) Vinicius</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
